@@ -1,0 +1,16 @@
+{
+  "$id": "https://example.com/region.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Region",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The region name."
+    },
+    "code": {
+      "type": "string",
+      "description": "The region code."
+    }
+  }
+}

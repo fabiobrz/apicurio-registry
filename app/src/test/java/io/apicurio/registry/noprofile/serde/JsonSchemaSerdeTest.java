@@ -17,6 +17,7 @@
 package io.apicurio.registry.noprofile.serde;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -29,10 +30,14 @@ import io.apicurio.registry.serde.SerdeConfig;
 import io.apicurio.registry.serde.SerdeHeaders;
 import io.apicurio.registry.support.Citizen;
 import io.apicurio.registry.support.City;
+import io.apicurio.registry.support.Country;
+import io.apicurio.registry.support.Region;
+import io.apicurio.registry.support.State;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.everit.json.schema.ValidationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -202,31 +207,70 @@ public class JsonSchemaSerdeTest extends AbstractResourceTestBase {
 
     @Test
     public void testJsonSchemaSerdeWithReferences() throws Exception {
+        InputStream regionSchema = getClass().getResourceAsStream("/io/apicurio/registry/util/region.json");
+        InputStream countrySchema = getClass().getResourceAsStream("/io/apicurio/registry/util/country.json");
+        InputStream stateSchema = getClass().getResourceAsStream("/io/apicurio/registry/util/state.json");
         InputStream citySchema = getClass().getResourceAsStream("/io/apicurio/registry/util/city.json");
         InputStream citizenSchema = getClass().getResourceAsStream("/io/apicurio/registry/util/citizen.json");
 
+        Assertions.assertNotNull(regionSchema);
+        Assertions.assertNotNull(countrySchema);
+        Assertions.assertNotNull(stateSchema);
         Assertions.assertNotNull(citizenSchema);
         Assertions.assertNotNull(citySchema);
 
-        String groupId = TestUtils.generateGroupId();
-        String dependencyArtifactId = generateArtifactId();
+        final String groupId = TestUtils.generateGroupId();
 
-        final Integer dependencyGlobalId = createArtifact(groupId, dependencyArtifactId, ArtifactType.JSON, IoUtil.toString(citySchema));
-        this.waitForGlobalId(dependencyGlobalId);
+        final String regionArtifactId = generateArtifactId();
+        final Integer regionGlobalId = createArtifact(groupId, regionArtifactId, ArtifactType.JSON, IoUtil.toString(regionSchema));
+        this.waitForGlobalId(regionGlobalId);
 
-        final ArtifactReference reference = new ArtifactReference();
-        reference.setVersion("1");
-        reference.setGroupId(groupId);
-        reference.setArtifactId(dependencyArtifactId);
-        reference.setName("city.json");
+        final ArtifactReference regionReference = new ArtifactReference();
+        regionReference.setVersion("1");
+        regionReference.setGroupId(groupId);
+        regionReference.setArtifactId(regionArtifactId);
+        regionReference.setName("region.json");
 
-        String artifactId = generateArtifactId();
+        final String countryArtifactId = generateArtifactId();
+        final Integer countryGlobalId = createArtifactWithReferences(groupId, countryArtifactId, ArtifactType.JSON, IoUtil.toString(countrySchema), Collections.singletonList(regionReference));
+        this.waitForGlobalId(countryGlobalId);
 
-        final Integer globalId = createArtifactWithReferences(groupId, artifactId, ArtifactType.JSON, IoUtil.toString(citizenSchema), Collections.singletonList(reference));
+        final ArtifactReference countryReference = new ArtifactReference();
+        countryReference.setVersion("1");
+        countryReference.setGroupId(groupId);
+        countryReference.setArtifactId(countryArtifactId);
+        countryReference.setName("country.json");
+
+        final String stateArtifactId = generateArtifactId();
+        final Integer stateGlobalId = createArtifactWithReferences(groupId, stateArtifactId, ArtifactType.JSON, IoUtil.toString(stateSchema), Collections.singletonList(countryReference));
+        this.waitForGlobalId(stateGlobalId);
+
+        final ArtifactReference stateReference = new ArtifactReference();
+        stateReference.setVersion("1");
+        stateReference.setGroupId(groupId);
+        stateReference.setArtifactId(stateArtifactId);
+        stateReference.setName("state.json");
+
+        String cityArtifactId = generateArtifactId();
+        final Integer cityGlobalId = createArtifactWithReferences(groupId, cityArtifactId, ArtifactType.JSON, IoUtil.toString(citySchema), Collections.singletonList(stateReference));
+        this.waitForGlobalId(cityGlobalId);
+
+        final ArtifactReference cityReference = new ArtifactReference();
+        cityReference.setVersion("1");
+        cityReference.setGroupId(groupId);
+        cityReference.setArtifactId(cityArtifactId);
+        cityReference.setName("city.json");
+
+        final String artifactId = generateArtifactId();
+        final Integer globalId = createArtifactWithReferences(groupId, artifactId, ArtifactType.JSON, IoUtil.toString(citizenSchema), Collections.singletonList(cityReference));
         this.waitForGlobalId(globalId);
 
-        City city = new City("New York", 10001);
-        Citizen citizen = new Citizen("Carles", "Arnal", 23, city);
+        final Region northAmerica = new Region("North America", "NA");
+        final Country usa = new Country("United States of America", "USA", northAmerica);
+
+        final State newYorkState = new State("New York", "NY", usa);
+        final City newYorkCity = new City("New York", 10001, newYorkState);
+        final Citizen citizen = new Citizen("Carles", "Arnal", 23, newYorkCity);
 
         try (JsonSchemaKafkaSerializer<Citizen> serializer = new JsonSchemaKafkaSerializer<>(restClient, true);
              Deserializer<Citizen> deserializer = new JsonSchemaKafkaDeserializer<>(restClient, true)) {
@@ -241,30 +285,24 @@ public class JsonSchemaSerdeTest extends AbstractResourceTestBase {
             Headers headers = new RecordHeaders();
             byte[] bytes = serializer.serialize(artifactId, headers, citizen);
 
-            citizen = deserializer.deserialize(artifactId, headers, bytes);
+            final Citizen deserializedCitizen = deserializer.deserialize(artifactId, headers, bytes);
 
-            Assertions.assertEquals("Carles", citizen.getFirstName());
-            Assertions.assertEquals("Arnal", citizen.getLastName());
-            Assertions.assertEquals(23, citizen.getAge());
-            Assertions.assertEquals("New York", citizen.getCity().getName());
+            Assertions.assertEquals("Carles", deserializedCitizen.getFirstName());
+            Assertions.assertEquals("Arnal", deserializedCitizen.getLastName());
+            Assertions.assertEquals(23, deserializedCitizen.getAge());
+            Assertions.assertEquals("New York", deserializedCitizen.getCity().getName());
 
             citizen.setAge(-1);
 
-            try {
-                serializer.serialize(artifactId, new RecordHeaders(), citizen);
-                Assertions.fail();
-            } catch (Exception ignored) {
-            }
+            assertThrows(ValidationException.class, () -> serializer.serialize(artifactId, new RecordHeaders(), citizen));
+
+            State missouriState = new State("Missouri", "MO", usa);
 
             citizen.setAge(23);
-            city = new City("Kansas CIty", -31);
-            citizen.setCity(city);
+            final City kansasCity = new City("Kansas CIty", -31, missouriState);
+            citizen.setCity(kansasCity);
 
-            try {
-                serializer.serialize(artifactId, new RecordHeaders(), citizen);
-                Assertions.fail();
-            } catch (Exception ignored) {
-            }
+            assertThrows(ValidationException.class, () -> serializer.serialize(artifactId, new RecordHeaders(), citizen));
 
         }
     }

@@ -18,24 +18,24 @@ package io.apicurio.registry.support;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class City {
+public class Country {
 
     @JsonProperty("name")
     private String name;
 
-    @JsonProperty("zipCode")
-    private Integer zipCode;
+    @JsonProperty("code")
+    private String code;
 
-    @JsonProperty("state")
-    private State state;
+    @JsonProperty("region")
+    private Region region;
 
-    public City() {
+    public Country() {
     }
 
-    public City(String name, Integer zipCode, State state) {
+    public Country(String name, String code, Region region) {
         this.name = name;
-        this.zipCode = zipCode;
-        this.state = state;
+        this.code = code;
+        this.region = region;
     }
 
     public String getName() {
@@ -46,19 +46,19 @@ public class City {
         this.name = name;
     }
 
-    public Integer getZipCode() {
-        return zipCode;
+    public String getCode() {
+        return code;
     }
 
-    public void setZipCode(Integer zipCode) {
-        this.zipCode = zipCode;
+    public void setCode(String code) {
+        this.code = code;
     }
 
-    public State getState() {
-        return state;
+    public Region getRegion() {
+        return region;
     }
 
-    public void setState(State state) {
-        this.state = state;
+    public void setRegion(Region region) {
+        this.region = region;
     }
 }

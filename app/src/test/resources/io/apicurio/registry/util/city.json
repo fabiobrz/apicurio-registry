@@ -12,6 +12,9 @@
       "type": "integer",
       "description": "The zip code.",
       "minimum": 0
+    },
+    "state": {
+      "$ref": "state.json"
     }
   }
 }
