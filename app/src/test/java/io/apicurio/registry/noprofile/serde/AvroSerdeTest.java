@@ -31,6 +31,9 @@ import io.apicurio.registry.serde.SerdeHeaders;
 import com.kubetrade.schema.common.Exchange;
 import com.kubetrade.schema.trade.TradeKey;
 import com.kubetrade.schema.trade.TradeRaw;
+import com.kubetrade.schema.trade.Transaction;
+import com.kubetrade.schema.trade.TransactionOwnerCategory;
+import com.kubetrade.schema.trade.TransactionOwner;
 import io.apicurio.registry.serde.config.IdOption;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -250,6 +253,15 @@ public class AvroSerdeTest extends AbstractResourceTestBase {
             tradeRaw.setTradeKey(tradeKey);
             tradeRaw.setPayload("testPayload");
             tradeRaw.setSymbol("testSymbol");
+
+            TransactionOwner transactionOwner = new TransactionOwner();
+            transactionOwner.setName("testOwner");
+            transactionOwner.setCategory(TransactionOwnerCategory.Individual);
+            Transaction transaction = new Transaction();
+            transaction.setKey(UUID.randomUUID().toString());
+            transaction.setOwner(transactionOwner);
+
+            tradeRaw.setTransaction(transaction);
 
             String artifactId = generateArtifactId();
 

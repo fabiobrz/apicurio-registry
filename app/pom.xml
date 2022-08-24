@@ -456,6 +456,9 @@
                             <stringType>String</stringType>
                             <imports>
                                 <import>${project.basedir}/src/test/resources/io/apicurio/registry/serde/Exchange.avsc</import>
+                                <import>${project.basedir}/src/test/resources/io/apicurio/registry/serde/TransactionOwnerCategory.avsc</import>
+                                <import>${project.basedir}/src/test/resources/io/apicurio/registry/serde/TransactionOwner.avsc</import>
+                                <import>${project.basedir}/src/test/resources/io/apicurio/registry/serde/Transaction.avsc</import>
                                 <import>${project.basedir}/src/test/resources/io/apicurio/registry/serde/TradeKey.avsc</import>
                                 <import>${project.basedir}/src/test/resources/io/apicurio/registry/serde/TradeRaw.avsc</import>
                             </imports>

@@ -1,0 +1,15 @@
+{
+  "namespace": "com.kubetrade.schema.trade",
+  "type": "record",
+  "name": "Transaction",
+  "fields": [
+    {
+      "name": "owner",
+      "type": "com.kubetrade.schema.trade.TransactionOwner"
+    },
+    {
+      "name": "key",
+      "type": "string"
+    }
+  ]
+}

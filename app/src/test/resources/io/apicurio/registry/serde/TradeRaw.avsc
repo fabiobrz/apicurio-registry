@@ -8,6 +8,10 @@
       "type": "com.kubetrade.schema.trade.TradeKey"
     },
     {
+      "name": "transaction",
+      "type": "com.kubetrade.schema.trade.Transaction"
+    },
+    {
       "name": "symbol",
       "type": "string"
     },
